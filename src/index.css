@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #722f37;
+  --accent-dark: #4f1f29;
+}
+
+@theme {
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #faf7f0, #efe8da);
+}
