@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../../lib/supabase";
 
-export function useMesas() {
+export function useTables() {
   return useQuery({
-    queryKey: ["mesas"],
+    queryKey: ["tables"],
     queryFn: async () => {
       const { data, error } = await supabase.from("mesas").select("*");
       if (error) throw error;

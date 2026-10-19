@@ -1,10 +1,10 @@
 import { Navigate } from "react-router-dom";
 import type { JSX } from "react/jsx-runtime";
-import { useSesionStore } from "./sesionStore";
+import { useSessionStore } from "./sessionStore";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const sesion = useSesionStore((state) => state.sesion);
-  if (!sesion) {
+  const session = useSessionStore((state) => state.session);
+  if (!session) {
     return <Navigate to="/" />;
   }
   return children;

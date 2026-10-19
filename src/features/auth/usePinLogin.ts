@@ -1,42 +1,41 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { useSesionStore } from "./sesionStore";
+import { useSessionStore } from "./sessionStore";
 
 export function usePinLogin() {
   const [pin, setPin] = useState("");
   const navigate = useNavigate();
-  const iniciarSesionCamarero = useSesionStore((state) => state.iniciarSesionCamarero);
-  const iniciarSesionAdmin = useSesionStore((state) => state.iniciarSesionAdmin);
+  const startWaiterSession = useSessionStore((state) => state.startWaiterSession);
+  const startAdminSession = useSessionStore((state) => state.startAdminSession);
 
   useEffect(() => {
-    console.log("a");
-    const verificar = async () => {
+    const checkPin = async () => {
       if (pin.length === 4) {
         const { data, error } = await supabase.rpc("verificar_pin_camarero", { pin });
         if (!error && data && data.length > 0) {
-          iniciarSesionCamarero(data[0].id, data[0].nombre);
-          navigate("/camarero");
+          startWaiterSession(data[0].id, data[0].nombre);
+          navigate("/waiter");
           return;
         }
       } else if (pin.length === 6) {
         const { data, error } = await supabase.rpc("verificar_pin_admin", { pin });
         if (!error && data) {
-          iniciarSesionAdmin();
+          startAdminSession();
           navigate("/admin");
           return;
         }
       }
     };
-    verificar();
-  }, [iniciarSesionAdmin, pin, iniciarSesionCamarero, navigate]);
-  const añadirDigito = (digito: string) => {
-    setPin((actual) => (actual.length < 6 ? actual + digito : actual));
+    checkPin();
+  }, [startAdminSession, pin, startWaiterSession, navigate]);
+  const addDigit = (digit: string) => {
+    setPin((current) => (current.length < 6 ? current + digit : current));
   };
 
-  const borrarDigito = () => {
-    setPin((actual) => actual.slice(0, -1));
+  const removeDigit = () => {
+    setPin((current) => current.slice(0, -1));
   };
 
-  return { pin, añadirDigito, borrarDigito, setPin };
+  return { pin, addDigit, removeDigit, setPin };
 }

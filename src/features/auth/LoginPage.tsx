@@ -2,7 +2,7 @@ import { Delete } from "lucide-react";
 import { usePinLogin } from "./usePinLogin";
 
 function LoginPage() {
-  const { pin, setPin, añadirDigito, borrarDigito } = usePinLogin();
+  const { pin, setPin, addDigit, removeDigit } = usePinLogin();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <input
@@ -28,22 +28,22 @@ function LoginPage() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-3 mt-2 text-2xl">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digito) => (
-          <BotonTeclado key={digito} onClick={() => añadirDigito(digito)}>
-            {digito}
-          </BotonTeclado>
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+          <KeypadButton key={digit} onClick={() => addDigit(digit)}>
+            {digit}
+          </KeypadButton>
         ))}
         <div className="bg-white w-20 h-20 border border-gray-300 rounded-lg"> </div>
-        <BotonTeclado onClick={() => añadirDigito("0")}>0</BotonTeclado>
-        <BotonTeclado onClick={borrarDigito}>
+        <KeypadButton onClick={() => addDigit("0")}>0</KeypadButton>
+        <KeypadButton onClick={removeDigit}>
           <Delete size={24} />
-        </BotonTeclado>
+        </KeypadButton>
       </div>
     </div>
   );
 }
 
-function BotonTeclado({
+function KeypadButton({
   children,
   onClick,
   type = "button",

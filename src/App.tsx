@@ -2,30 +2,30 @@ import { Route, Routes } from "react-router-dom";
 import AdminPage from "./features/admin/AdminPage";
 import LoginPage from "./features/auth/LoginPage";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
-import CamareroPage from "./features/camarero/CamareroPage";
-import ComandaPage from "./features/camarero/ComandaPage";
-import CocinaPage from "./features/cocina/CocinaPage";
+import KitchenPage from "./features/kitchen/KitchenPage";
+import OrderPage from "./features/waiter/order/OrderPage";
+import WaiterPage from "./features/waiter/tables/WaiterPage";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route
-        path="/camarero"
+        path="/waiter"
         element={
           <ProtectedRoute>
-            <CamareroPage />
+            <WaiterPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/comandaPage/:comandaId"
+        path="/order/:orderId"
         element={
           <ProtectedRoute>
-            <ComandaPage />
+            <OrderPage />
           </ProtectedRoute>
         }
       />
-      <Route path="/cocina" element={<CocinaPage />} />
+      <Route path="/kitchen" element={<KitchenPage />} />
       <Route
         path="/admin"
         element={

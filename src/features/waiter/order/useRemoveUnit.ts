@@ -1,36 +1,36 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../../lib/supabase";
 
-export function useQuitarUnidad() {
+export function useRemoveUnit() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      lineaId,
-      cantidadActual,
+      lineId,
+      currentQuantity,
     }: {
-      lineaId: string;
-      cantidadActual: number;
-      comandaId: string;
+      lineId: string;
+      currentQuantity: number;
+      orderId: string;
     }) => {
-      if (cantidadActual > 1) {
+      if (currentQuantity > 1) {
         const { error } = await supabase
           .from("comanda_lineas")
-          .update({ cantidad: cantidadActual - 1 })
-          .eq("id", lineaId)
+          .update({ cantidad: currentQuantity - 1 })
+          .eq("id", lineId)
           .eq("enviado_a_cocina", false);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("comanda_lineas")
           .delete()
-          .eq("id", lineaId)
+          .eq("id", lineId)
           .eq("enviado_a_cocina", false);
         if (error) throw error;
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["lineasComanda", variables.comandaId] });
+      queryClient.invalidateQueries({ queryKey: ["orderLines", variables.orderId] });
     },
   });
 }

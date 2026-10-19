@@ -51,23 +51,31 @@
     - [x] Pintado lo ya pedido en `ComandaPage`, distinguiendo "Enviat"/"Pendent".
     - [x] Control de cantidad por línea: `useQuitarUnidad` — resta 1 si `cantidad > 1`, borra la línea si es la última unidad; protegido en el propio `update`/`delete` con `.eq("enviado_a_cocina", false)` para no tocar nunca una línea ya enviada. Botón solo visible en líneas pendientes.
     - [x] Botón "Enviar a cocina" (`useEnviarCocina`, marca `enviado_a_cocina`/`enviado_at` en todas las líneas pendientes de la comanda de golpe; botón solo visible si queda algo pendiente, vía `.some(...)`).
-  - [ ] **Cuenta y cobro**
-    - [ ] Calcular el total (suma de líneas).
-    - [ ] "Pedir la cuenta" → mesa(s) a `cuenta_pedida`.
-    - [ ] "Cobrar" → comanda a `cobrada` + `cerrada_at`, mesa(s) a `libre`.
+  - [x] **Cuenta y cobro**
+    - [x] Total calculado con `.reduce()` sobre `lineas` (cantidad × precio de cada una), mostrado en pantalla.
+    - [x] "Pedir la cuenta": función `pedir_cuenta` (RPC) → mesa(s) a `cuenta_pedida`, y además imprime el tique de cuenta de verdad (`imprimirTiqueCuenta`, con todas las líneas —no solo las de cocina— y el total).
+    - [x] "Cobrar": función `cobrar_comanda` (RPC) → calcula el total en el servidor, comanda a `cobrada` + `cerrada_at` + `total`, mesa(s) a `libre`, todo en una transacción. Al terminar, navega de vuelta a `/camarero`.
   - [ ] **Diseño visual pendiente** (una vez la lógica de arriba funcione entera):
     - [ ] **Login**: pulir el teclado (sombras, estado al pulsar), feedback visual de "PIN incorrecto" (ahora mismo se borra en silencio, sin avisar de nada), logo/nombre del restaurante arriba (el mockup lo lleva).
     - [ ] **CamareroPage**: el listado de mesas es una `<ul>` de texto plano — falta convertirlo en tarjetas, con color según `estado` (libre/abierta/cocina/cuenta_pedida), diseño del botón de modo selección, layout general (cabecera, espaciados).
-    - [ ] **ComandaPage**: no tiene ningún estilo todavía — menú por categorías como tabs o secciones con tarjetas de plato (nombre+precio), zona de "lo que llevas pedido" tipo resumen/carrito, botón de enviar a cocina con buen feedback.
+    - [ ] **ComandaPage**: no tiene ningún estilo todavía — menú por categorías como tabs o secciones con tarjetas de plato (nombre+precio), zona de "lo que llevas pedido" tipo resumen/carrito, botón de enviar a cocina con buen feedback. Añadir margen inferior (el contenido llega a quedar oculto detrás de la barra de tareas al crecer la lista de pedidos).
     - [ ] Indicador visual (icono/color) de enviado vs pendiente en cada línea de la comanda.
+    - [x] Ordenar las categorías del menú en un orden fijo: tabla `categorias` propia (`id`, `nombre`, `orden`) en vez de texto libre en `platos.categoria` — cada restaurante define las suyas y su orden, sin tocar código. Hook `useCategorias()` las trae ya ordenadas (`.order("orden")`).
   - [ ] Plano visual con posiciones/colores por estado (al final, sustituyendo el listado simple).
 
-- [ ] **Fase 5 — Cocina**
-  - [ ] Instalar y configurar `qz-tray`.
-  - [ ] Diseñar el formato del tique (agrupado por mesa, qué datos lleva).
-  - [ ] Al "Enviar a cocina": generar tique solo con líneas pendientes de platos con `imprime_a_cocina: true`.
+- [ ] **Fase 5 — Cocina** (adelantada antes de hora para probar con la impresora real de CRIT)
+  - [x] Instalado `qz-tray`, programa QZ Tray instalado en el ordenador de pruebas (modo sin firmar).
+  - [x] `src/lib/qz.ts`: `conectarImpresora`, `listarImpresoras`, `imprimirTicketCocina` — centrado, número de comanda diario destacado (ver más abajo), nombre de mesa, hora, platos en negrita a doble alto, separadores, margen de papel en blanco antes del corte, codificación `Cp1252` + comando `ESC t` para que los acentos (á, ó...) salgan bien, platos ordenados por categoría.
+  - [x] Número de comanda diario y legible (`comandas.numero`, tabla `contadores_diarios` con incremento atómico vía `insert ... on conflict`, reiniciado cada día a medianoche hora de Madrid — no UTC) — se ve en pantalla y en el tique, para que cocina pueda ordenar los tiques sin esfuerzo.
+  - [x] `useMesasDeComanda(comandaId)` — nombres de mesa para el encabezado del tique (vía `comanda_mesas` → `mesas`).
+  - [x] Al "Enviar a cocina": filtra las líneas pendientes con `imprime_a_cocina: true` y las manda a imprimir, junto con el `enviarCocina.mutate(...)` que ya marcaba el estado.
+  - [x] **Probado con la impresora térmica real de CRIT** (USB) — funcionó. Hubo que instalar el driver genérico "Generic / Text Only" de Windows (Windows la veía como dispositivo "No especificado" hasta entonces).
+  - [x] Tique de cuenta (distinto al de cocina): `imprimirTiqueCuenta` — todas las líneas (no solo las de cocina), con precio y total, se imprime al "Pedir la cuenta".
   - [ ] Manejo de errores de impresión (impresora apagada, QZ Tray no conectado) — aviso con `sonner`.
-  - [ ] Tique de cuenta (distinto al de cocina) al pedir/cobrar.
+  - [ ] Mejorar el diseño del tique de cuenta (ahora mismo es la primera versión, sin pulir como sí hicimos con el de cocina — alineación de precios, espaciados, etc.).
+  - [ ] Usar una impresora **distinta** para el tique de cuenta que para el de cocina (ahora mismo las dos llamadas usan el mismo nombre fijo `"Cocina"` — en un restaurante real probablemente son dos impresoras físicas distintas, una en cocina y otra en barra/caja).
+  - [ ] Nombre(s) de impresora configurable(s) (ver `decisiones.md` — ahora mismo fijos en el código, y serán dos nombres distintos, no uno).
+  - [ ] Impresión disparada por Realtime desde un "puesto de cocina" fijo, para que funcione con varias tablets y una sola impresora conectada por USB a un único ordenador (ver `decisiones.md`) — depende de Fase 6.
 
 - [ ] **Fase 6 — Realtime**
   - [ ] Suscripción Realtime a `mesas`.
