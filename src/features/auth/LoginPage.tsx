@@ -20,7 +20,7 @@ function LoginPage() {
           <div
             key={index}
             className={`w-20 h-25 border rounded-lg flex items-center justify-center ${
-              index < pin.length ? "border-accent" : "border-gray-300"
+              index < pin.length ? "border-accent" : "border-stone-300"
             }`}
           >
             {index < pin.length && "·"}
@@ -33,7 +33,7 @@ function LoginPage() {
             {digit}
           </KeypadButton>
         ))}
-        <div className="bg-white w-20 h-20 border border-gray-300 rounded-lg"> </div>
+        <div className="bg-white w-20 h-20 border border-stone-300 rounded-lg"> </div>
         <KeypadButton onClick={() => addDigit("0")}>0</KeypadButton>
         <KeypadButton onClick={removeDigit}>
           <Delete size={24} />
@@ -56,7 +56,7 @@ function KeypadButton({
     <button
       type={type}
       onClick={onClick}
-      className="w-20 h-20 bg-white border border-gray-300 rounded-lg cursor-pointer flex justify-center items-center"
+      className="w-20 h-20 bg-white border border-stone-300 rounded-lg cursor-pointer flex justify-center items-center"
     >
       {children}
     </button>

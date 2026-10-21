@@ -7,7 +7,7 @@ export function useOrder(orderId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comandas")
-        .select("*")
+        .select("*, camareros(nombre)")
         .eq("id", orderId)
         .single();
       if (error) throw error;

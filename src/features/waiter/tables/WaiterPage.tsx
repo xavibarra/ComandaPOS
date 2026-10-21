@@ -72,7 +72,7 @@ function WaiterPage() {
       {tablesToOpen && (
         <Modal onClose={() => setTablesToOpen(null)}>
           <h2 className="text-center text-2xl font-bold">
-            {tablesToOpen.map((id) => tables?.find((table) => table.id === id)?.nombre)}
+            {tablesToOpen.map((id) => tables?.find((table) => table.id === id)?.nombre).join(" + ")}
           </h2>
           <p className="text-center font-light">¿Cuantos comensales?</p>
           <form
@@ -90,7 +90,7 @@ function WaiterPage() {
           >
             <div className="flex items-center justify-center gap-6 my-4">
               <button
-                className="border border-gray-300 w-10 h-10 rounded-full text-xl font-bold flex items-center justify-center"
+                className="border border-stone-300 w-10 h-10 rounded-full text-xl font-bold flex items-center justify-center"
                 type="button"
                 onClick={() => setGuests(Math.max(1, guests - 1))}
               >
