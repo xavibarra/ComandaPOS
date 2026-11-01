@@ -15,7 +15,7 @@ export function Header({
       <div className="flex items-center">
         {onBack && (
           <button
-            className="bg-white text-accent px-2 py-2 rounded-lg hover:bg-white/90"
+            className="bg-white text-accent px-2 py-2 rounded-lg hover:bg-white/90 cursor-pointer"
             onClick={onBack}
           >
             <ChevronLeft size={18} />

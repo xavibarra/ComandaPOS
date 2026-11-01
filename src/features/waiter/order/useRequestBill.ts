@@ -10,8 +10,9 @@ export function useRequestBill() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["order", variables.orderId] });
     },
   });
 }

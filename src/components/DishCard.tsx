@@ -14,7 +14,10 @@ export function DishCard({
   pendingQuantity: number;
 }) {
   return (
-    <div className="bg-white rounded-xl p-3 border border-stone-200 flex flex-col gap-2">
+    <div
+      onClick={onClick}
+      className="bg-white rounded-xl p-3 border border-stone-200 flex flex-col gap-2 cursor-pointer"
+    >
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-bold text-sm">{dish.nombre}</h3>
         <p className="text-stone-700 text-sm font-medium shrink-0">{dish.precio.toFixed(2)} €</p>
@@ -22,9 +25,7 @@ export function DishCard({
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          {sentQuantity && (
-            <p className="text-xs text-stone-500">✓ {sentQuantity} enviat</p>
-          )}
+          {sentQuantity && <p className="text-xs text-stone-500">✓ {sentQuantity} enviat</p>}
           {pendingQuantity && (
             <p className="text-xs text-accent font-medium">● {pendingQuantity} nou</p>
           )}
@@ -38,12 +39,9 @@ export function DishCard({
             </Badge>
           )}
         </div>
-        <button
-          className="bg-accent w-7 h-7 text-white rounded-full flex items-center justify-center shrink-0"
-          onClick={onClick}
-        >
+        <div className="bg-accent w-7 h-7 text-white rounded-full flex justify-center shrink-0">
           +
-        </button>
+        </div>
       </div>
     </div>
   );
