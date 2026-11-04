@@ -1,8 +1,9 @@
-type BadgeColor = "green" | "yellow" | "red";
+export type BadgeColor = "green" | "yellow" | "red" | "blue";
 const colorClasses: Record<BadgeColor, string> = {
   green: "bg-green-100 text-green-700",
   yellow: "bg-amber-100 text-amber-700",
   red: "bg-red-100 text-red-700",
+  blue: "bg-blue-100 text-blue-700",
 };
 
 const base = "rounded-full px-3 py-1 text-sm font-medium";

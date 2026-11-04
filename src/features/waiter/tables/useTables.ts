@@ -5,7 +5,7 @@ export function useTables() {
   return useQuery({
     queryKey: ["tables"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("mesas").select("*");
+      const { data, error } = await supabase.from("mesas").select("*").eq("es_barra", false);
       if (error) throw error;
       return data;
     },

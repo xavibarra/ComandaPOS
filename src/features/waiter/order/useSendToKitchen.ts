@@ -14,6 +14,7 @@ export function useSendToKitchen() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orderLines", variables.orderId] });
+      queryClient.invalidateQueries({ queryKey: ["barTables"] });
     },
   });
 }

@@ -1,65 +1,109 @@
-import { Delete } from "lucide-react";
-import { usePinLogin } from "./usePinLogin";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
+import PinKeypad from "./PinKeypad";
+import { useSessionStore } from "./sessionStore";
+import { useWaiters } from "./useWaiters";
 
 function LoginPage() {
-  const { pin, setPin, addDigit, removeDigit } = usePinLogin();
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <input
-        className="absolute opacity-0 overflow-hidden w-px h-px"
-        type="password"
-        autoFocus
-        inputMode="numeric"
-        placeholder="PIN"
-        maxLength={6}
-        value={pin}
-        onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-      />
-      <div className="flex justify-between">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <div
-            key={index}
-            className={`w-20 h-25 border rounded-lg flex items-center justify-center ${
-              index < pin.length ? "border-accent" : "border-stone-300"
-            }`}
-          >
-            {index < pin.length && "·"}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-3 mt-2 text-2xl">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
-          <KeypadButton key={digit} onClick={() => addDigit(digit)}>
-            {digit}
-          </KeypadButton>
-        ))}
-        <div className="bg-white w-20 h-20 border border-stone-300 rounded-lg"> </div>
-        <KeypadButton onClick={() => addDigit("0")}>0</KeypadButton>
-        <KeypadButton onClick={removeDigit}>
-          <Delete size={24} />
-        </KeypadButton>
-      </div>
-    </div>
+  const { data: waiters } = useWaiters();
+  const [selectedWaiter, setSelectedWaiter] = useState<{ id: string; nombre: string } | null>(
+    null,
   );
-}
+  const [adminLogin, setAdminLogin] = useState(false);
+  const [wrongPin, setWrongPin] = useState(false);
+  const startWaiterSession = useSessionStore((state) => state.startWaiterSession);
+  const startAdminSession = useSessionStore((state) => state.startAdminSession);
+  const navigate = useNavigate();
 
-function KeypadButton({
-  children,
-  onClick,
-  type = "button",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  type?: "button" | "submit";
-}) {
+  const goBack = () => {
+    setSelectedWaiter(null);
+    setAdminLogin(false);
+    setWrongPin(false);
+  };
+
+  if (selectedWaiter) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+        <button className="text-sm text-stone-500 cursor-pointer" onClick={goBack}>
+          ← Tornar
+        </button>
+        <div
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white ${
+            wrongPin ? "bg-red-500" : "bg-accent"
+          }`}
+        >
+          {selectedWaiter.nombre.charAt(0).toUpperCase()}
+        </div>
+        <p className="font-bold">{selectedWaiter.nombre}</p>
+        {wrongPin && <p className="text-sm text-red-600">PIN incorrecte, torna-ho a provar</p>}
+        <PinKeypad
+          length={4}
+          onComplete={async (pin) => {
+            const { data, error } = await supabase.rpc("verificar_pin_camarero", {
+              camarero_id_input: selectedWaiter.id,
+              pin,
+            });
+            if (!error && data && data.length > 0) {
+              startWaiterSession(data[0].id, data[0].nombre);
+              navigate("/waiter");
+              return;
+            }
+            setWrongPin(true);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (adminLogin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+        <button className="text-sm text-stone-500 cursor-pointer" onClick={goBack}>
+          ← Tornar
+        </button>
+        <p className="font-bold">Accés d'administració</p>
+        {wrongPin && <p className="text-sm text-red-600">PIN incorrecte, torna-ho a provar</p>}
+        <PinKeypad
+          length={6}
+          onComplete={async (pin) => {
+            const { data, error } = await supabase.rpc("verificar_pin_admin", { pin });
+            if (!error && data) {
+              startAdminSession();
+              navigate("/admin");
+              return;
+            }
+            setWrongPin(true);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      className="w-20 h-20 bg-white border border-stone-300 rounded-lg cursor-pointer flex justify-center items-center"
-    >
-      {children}
-    </button>
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <h1 className="font-bold text-xl">Qui ets?</h1>
+      <div className="flex flex-wrap justify-center gap-6 max-w-sm">
+        {waiters?.map((waiter) => (
+          <button
+            key={waiter.id}
+            onClick={() => setSelectedWaiter(waiter)}
+            className="flex flex-col items-center gap-2 cursor-pointer"
+          >
+            <div className="w-16 h-16 rounded-full bg-accent text-white flex items-center justify-center text-xl font-bold">
+              {waiter.nombre.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium">{waiter.nombre}</span>
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => setAdminLogin(true)}
+        className="text-xs text-stone-400 mt-6 cursor-pointer hover:text-stone-600"
+      >
+        Admin
+      </button>
+    </div>
   );
 }
 

@@ -4,14 +4,18 @@ export function Header({
   subtitle,
   onBack,
   rightContent,
+  icon,
+  className,
 }: {
   title: string;
   subtitle?: string;
   onBack?: () => void;
   rightContent?: React.ReactNode;
+  icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <header className="bg-accent p-4 flex items-center justify-between">
+    <header className={`p-4 flex items-center justify-between ${className ?? "bg-accent"}`}>
       <div className="flex items-center">
         {onBack && (
           <button
@@ -21,9 +25,12 @@ export function Header({
             <ChevronLeft size={18} />
           </button>
         )}
-        <div className="flex flex-col ml-4">
-          <h1 className="font-bold text-white">{title}</h1>
-          {subtitle && <p className="text-white/70">{subtitle}</p>}
+        <div className="flex items-center gap-2 ml-4">
+          {icon}
+          <div className="flex flex-col">
+            <h1 className="font-bold text-white">{title}</h1>
+            {subtitle && <p className="text-white/70">{subtitle}</p>}
+          </div>
         </div>
       </div>
       <div>{rightContent && <div>{rightContent}</div>}</div>

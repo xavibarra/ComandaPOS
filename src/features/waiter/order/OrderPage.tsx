@@ -6,7 +6,9 @@ import { DishCard } from "../../../components/DishCard";
 import { Header } from "../../../components/Header";
 import { printBillTicket, printKitchenTicket } from "../../../lib/qz";
 import { useAddLine } from "./useAddLine";
+import { useCancelEmptyOrder } from "./useCancelEmptyOrder";
 import { useCategories } from "./useCategories";
+import { useCategoriesForBar } from "./useCategoriesForBar";
 import { useChargeOrder } from "./useChargeOrder";
 import { useDishes } from "./useDishes";
 import { useOrder } from "./useOrder";
@@ -16,19 +18,27 @@ import { useRemoveUnit } from "./useRemoveUnit";
 import { useRequestBill } from "./useRequestBill";
 import { useSendToKitchen } from "./useSendToKitchen";
 
-function OrderPage() {
-  const { orderId } = useParams();
+function OrderPage({
+  orderId: orderIdProp,
+  onClose,
+}: { orderId?: string; onClose?: () => void } = {}) {
+  const params = useParams();
+  const orderId = orderIdProp ?? params.orderId;
   const { data: dishes } = useDishes();
-  const { data: categories } = useCategories();
+  const { data: orderTables } = useOrderTables(orderId!);
+  const isBarOrder = orderTables?.some((t) => t.mesas.es_barra) ?? false;
+  const { data: tableCategories } = useCategories();
+  const { data: barCategories } = useCategoriesForBar({ enabled: isBarOrder });
+  const categories = isBarOrder ? barCategories : tableCategories;
   const addLine = useAddLine();
   const { data: lines } = useOrderLines(orderId!);
   const [ticketOpen, setTicketOpen] = useState(false);
   const removeUnit = useRemoveUnit();
   const sendToKitchen = useSendToKitchen();
-  const { data: orderTables } = useOrderTables(orderId!);
   const { data: order } = useOrder(orderId!);
   const requestBill = useRequestBill();
   const chargeOrder = useChargeOrder();
+  const cancelEmptyOrder = useCancelEmptyOrder();
   const navigate = useNavigate();
   const total = lines?.reduce((a, b) => a + b.platos.precio * b.cantidad, 0) ?? 0;
   const tableNames = orderTables?.map((m) => m.mesas.nombre);
@@ -60,12 +70,30 @@ function OrderPage() {
     await printKitchenTicket("Cocina", order?.numero ?? 0, tableNames ?? [], linesToPrint ?? []);
   };
 
+  const handleCharge = () => {
+    chargeOrder.mutate(
+      { orderId: orderId! },
+      {
+        onSuccess: () => {
+          if (onClose) onClose();
+          else navigate(isBarOrder ? "/bar" : "/waiter");
+        },
+      },
+    );
+  };
+
   return (
-    <div className="h-dvh overflow-hidden flex flex-col">
+    <div className={`${onClose ? "h-full" : "h-dvh"} overflow-hidden flex flex-col`}>
       <Header
         title={`${tableNames?.join(" + ") ?? ""} · ${order?.comensales ?? 0} ${order?.comensales === 1 ? "comensal" : "comensales"}`}
         subtitle={`Camarero: ${order?.camareros?.nombre}`}
-        onBack={() => navigate(-1)}
+        onBack={async () => {
+          if (order?.estado === "abierta" && (lines?.length ?? 0) === 0) {
+            await cancelEmptyOrder.mutateAsync({ orderId: orderId! });
+          }
+          if (onClose) onClose();
+          else navigate(-1);
+        }}
         rightContent={
           <Badge
             color={
@@ -202,28 +230,27 @@ function OrderPage() {
               </button>
             )}
             {order?.estado === "abierta" ? (
-              <button
-                onClick={async () => {
-                  requestBill.mutate({ orderId: orderId! });
-                  await printBill();
-                }}
-                className="border border-stone-300 text-stone-700 rounded-xl py-2 text-sm font-medium cursor-pointer hover:bg-stone-50"
-              >
-                Imprimir Cuenta
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    requestBill.mutate({ orderId: orderId! });
+                    await printBill();
+                  }}
+                  className="flex-1 border border-stone-300 text-stone-700 rounded-xl py-2 text-sm font-medium cursor-pointer hover:bg-stone-50"
+                >
+                  Imprimir Cuenta
+                </button>
+                <button
+                  onClick={handleCharge}
+                  className="flex-1 bg-accent text-white rounded-xl py-2 text-sm font-medium cursor-pointer hover:bg-accent-dark"
+                >
+                  Cobrar sense imprimir
+                </button>
+              </div>
             ) : order?.estado === "cuenta_pedida" ? (
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    chargeOrder.mutate(
-                      { orderId: orderId! },
-                      {
-                        onSuccess: () => {
-                          navigate(`/waiter`);
-                        },
-                      },
-                    );
-                  }}
+                  onClick={handleCharge}
                   className="flex-1 border border-stone-300 text-stone-700 rounded-xl py-2 text-sm font-medium cursor-pointer hover:bg-stone-50"
                 >
                   Cobrar comanda

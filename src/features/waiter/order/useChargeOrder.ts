@@ -12,6 +12,7 @@ export function useChargeOrder() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["barTables"] });
       queryClient.invalidateQueries({ queryKey: ["order", variables.orderId] });
     },
   });

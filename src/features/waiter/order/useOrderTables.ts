@@ -7,10 +7,10 @@ export function useOrderTables(orderId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comanda_mesas")
-        .select("mesas(nombre)")
+        .select("mesas(nombre, es_barra)")
         .eq("comanda_id", orderId);
       if (error) throw error;
-      return data as unknown as { mesas: { nombre: string } }[];
+      return data as unknown as { mesas: { nombre: string; es_barra: boolean } }[];
     },
   });
 }
