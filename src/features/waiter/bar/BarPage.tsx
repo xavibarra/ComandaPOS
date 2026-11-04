@@ -6,6 +6,7 @@ import { tableStateStyles } from "../../../lib/tableStates";
 import { useSessionStore } from "../../auth/sessionStore";
 import OrderPage from "../order/OrderPage";
 import { useCreateOrder } from "../tables/useCreateOrder";
+import type { PreviewLine } from "./useBarTables";
 import { useBarTables } from "./useBarTables";
 
 function BarPage() {
@@ -69,7 +70,9 @@ function BarPage() {
                 </div>
                 {tab.previewLines.length > 0 ? (
                   <p className="text-xs text-stone-500 leading-snug line-clamp-3">
-                    {tab.previewLines.map((l) => `${l.cantidad} ${l.nombre}`).join(", ")}
+                    {tab.previewLines
+                      .map((l: PreviewLine) => `${l.cantidad} ${l.nombre}`)
+                      .join(", ")}
                   </p>
                 ) : (
                   <p className="text-xs text-stone-400">{style?.label ?? tab.estado}</p>

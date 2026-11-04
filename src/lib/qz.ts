@@ -25,11 +25,12 @@ export async function printKitchenTicket(
 ) {
   await connectPrinter();
   const printer = await qz.printers.find(printerName);
+  const printerId = Array.isArray(printer) ? printer[0] : printer;
   // encoding: "Cp1252" le dice a QZ Tray que mande el texto con esa codificación
   // (no UTF-8, la que usa JavaScript por defecto) — necesaria para que á, ó, etc.
   // no salgan mal. Tiene que combinarse con el comando ESC t de abajo, que le
   // dice a la propia impresora que interprete lo que reciba con esa misma tabla.
-  const config = qz.configs.create(printer, { encoding: "Cp1252" });
+  const config = qz.configs.create(printerId, { encoding: "Cp1252" });
 
   const time = new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" });
 
@@ -73,7 +74,8 @@ export async function printBillTicket(
 ) {
   await connectPrinter();
   const printer = await qz.printers.find(printerName);
-  const config = qz.configs.create(printer, { encoding: "Cp1252" });
+  const printerId = Array.isArray(printer) ? printer[0] : printer;
+  const config = qz.configs.create(printerId, { encoding: "Cp1252" });
 
   const time = new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" });
 

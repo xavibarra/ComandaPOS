@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../../../lib/supabase";
 
-type PreviewLine = { nombre: string; cantidad: number };
+export type PreviewLine = { nombre: string; cantidad: number };
 
 export function useBarTables() {
   return useQuery({
