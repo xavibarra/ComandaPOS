@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../../components/Header";
 import { useCategories } from "../../waiter/order/useCategories";
 import { useCategoriesForBar } from "../../waiter/order/useCategoriesForBar";
+import ExtrasList from "../extras/ExtrasList";
 import { useCreateCategory } from "./useCreateCategory";
 import { useDeleteCategory } from "./useDeleteCategory";
 import { useReorderCategory } from "./useReorderCategory";
@@ -20,6 +21,7 @@ function CategoriesAdminPage() {
 
   const [newName, setNewName] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [extrasOpenFor, setExtrasOpenFor] = useState<string | null>(null);
 
   const move = (
     list: Category[] | undefined,
@@ -76,24 +78,38 @@ function CategoriesAdminPage() {
 
         <section className="flex flex-col gap-3">
           <h2 className="font-bold text-stone-500 text-sm uppercase">Ordre a les taules</h2>
+          <p className="text-xs text-stone-400">
+            "Extres" aquí són per a tota la categoria — es veuen a tots els plats que hi hagi dins
+            (p. ex. formatge per a tots els entrepans).
+          </p>
           {tableCategories?.map((category, index) => (
-            <CategoryRow
-              key={category.id}
-              name={category.nombre}
-              upDisabled={index === 0}
-              downDisabled={index === tableCategories.length - 1}
-              onUp={() => move(tableCategories, index, -1, "orden")}
-              onDown={() => move(tableCategories, index, 1, "orden")}
-              onDelete={() => {
-                setDeleteError(null);
-                deleteCategory.mutate(category.id, {
-                  onError: () =>
-                    setDeleteError(
-                      "No es pot esborrar: encara hi ha plats amb aquesta categoria.",
-                    ),
-                });
-              }}
-            />
+            <div key={category.id} className="flex flex-col gap-2">
+              <CategoryRow
+                name={category.nombre}
+                upDisabled={index === 0}
+                downDisabled={index === tableCategories.length - 1}
+                onUp={() => move(tableCategories, index, -1, "orden")}
+                onDown={() => move(tableCategories, index, 1, "orden")}
+                onToggleExtras={() =>
+                  setExtrasOpenFor(extrasOpenFor === category.id ? null : category.id)
+                }
+                extrasOpen={extrasOpenFor === category.id}
+                onDelete={() => {
+                  setDeleteError(null);
+                  deleteCategory.mutate(category.id, {
+                    onError: () =>
+                      setDeleteError(
+                        "No es pot esborrar: encara hi ha plats amb aquesta categoria.",
+                      ),
+                  });
+                }}
+              />
+              {extrasOpenFor === category.id && (
+                <div className="bg-stone-50 rounded-lg p-3 ml-3">
+                  <ExtrasList categoriaId={category.id} />
+                </div>
+              )}
+            </div>
           ))}
         </section>
 
@@ -125,6 +141,8 @@ function CategoryRow({
   onUp,
   onDown,
   onDelete,
+  onToggleExtras,
+  extrasOpen,
 }: {
   name: string;
   upDisabled: boolean;
@@ -132,11 +150,23 @@ function CategoryRow({
   onUp: () => void;
   onDown: () => void;
   onDelete?: () => void;
+  onToggleExtras?: () => void;
+  extrasOpen?: boolean;
 }) {
   return (
     <div className="bg-white rounded-xl p-3 border border-stone-200 flex items-center justify-between gap-3">
       <span className="font-medium">{name}</span>
       <div className="flex items-center gap-1">
+        {onToggleExtras && (
+          <button
+            className={`text-xs px-2 py-1 rounded-md cursor-pointer ${
+              extrasOpen ? "bg-accent text-white" : "text-stone-500 hover:bg-stone-100"
+            }`}
+            onClick={onToggleExtras}
+          >
+            Extres
+          </button>
+        )}
         <button
           className="p-1 text-stone-400 disabled:opacity-30 cursor-pointer"
           disabled={upDisabled}

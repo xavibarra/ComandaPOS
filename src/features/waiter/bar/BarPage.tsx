@@ -48,7 +48,11 @@ function BarPage() {
         }
       />
       <div className="flex-1 flex overflow-hidden">
-        <div className="w-80 shrink-0 border-r border-stone-200 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start">
+        <div
+          className={`w-full lg:w-80 shrink-0 lg:border-r border-stone-200 overflow-y-auto p-3 grid grid-cols-2 gap-3 content-start ${
+            selectedOrderId ? "hidden lg:grid" : "grid"
+          }`}
+        >
           {tabs?.map((tab) => {
             const style = tableStateStyles[tab.estado];
             const selected = tab.orderId !== null && tab.orderId === selectedOrderId;
@@ -81,11 +85,11 @@ function BarPage() {
             );
           })}
         </div>
-        <div className="flex-1 overflow-hidden">
+        <div className={`flex-1 overflow-hidden ${selectedOrderId ? "block" : "hidden lg:block"}`}>
           {selectedOrderId ? (
             <OrderPage orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
           ) : (
-            <div className="h-full flex items-center justify-center text-stone-400">
+            <div className="h-full hidden lg:flex items-center justify-center text-stone-400">
               Selecciona una barra
             </div>
           )}

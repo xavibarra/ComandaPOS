@@ -24,7 +24,7 @@ function LoginPage() {
 
   if (selectedWaiter) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
         <button className="text-sm text-stone-500 cursor-pointer" onClick={goBack}>
           ← Tornar
         </button>
@@ -58,7 +58,7 @@ function LoginPage() {
 
   if (adminLogin) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
         <button className="text-sm text-stone-500 cursor-pointer" onClick={goBack}>
           ← Tornar
         </button>
@@ -81,7 +81,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+    <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
       <h1 className="font-bold text-xl">Qui ets?</h1>
       <div className="flex flex-wrap justify-center gap-6 max-w-sm">
         {waiters?.map((waiter) => (

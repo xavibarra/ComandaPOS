@@ -12,8 +12,9 @@ export function useCreateDish() {
       stock: number;
       imprime_a_cocina: boolean;
     }) => {
-      const { error } = await supabase.from("platos").insert(dish);
+      const { data, error } = await supabase.from("platos").insert(dish).select("id").single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["adminDishes"] });

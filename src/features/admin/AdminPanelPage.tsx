@@ -22,7 +22,7 @@ function AdminPanelPage() {
 
   if (waiterModeOpen) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-6">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
         <button
           className="text-sm text-stone-500 cursor-pointer"
           onClick={() => setWaiterModeOpen(false)}

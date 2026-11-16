@@ -4,6 +4,7 @@ import Badge from "../../../components/Badge";
 import Header from "../../../components/Header";
 import Modal from "../../waiter/Modal";
 import { useCategories } from "../../waiter/order/useCategories";
+import DishModifiersSection from "./DishModifiersSection";
 import { useAdminDishes } from "./useAdminDishes";
 import { useCreateDish } from "./useCreateDish";
 import { useUpdateDish } from "./useUpdateDish";
@@ -175,7 +176,12 @@ function DishesAdminPage() {
                   { onSuccess: () => setFormOpen(false) },
                 );
               } else {
-                createDish.mutate(changes, { onSuccess: () => setFormOpen(false) });
+                // No se cierra el modal: pasa a modo edición con el id ya
+                // creado, para poder añadir extras/variants sin tener que
+                // volver a abrir "Editar" por separado.
+                createDish.mutate(changes, {
+                  onSuccess: (newDish) => setEditingId(newDish.id),
+                });
               }
             }}
             className="flex flex-col gap-3"
@@ -236,6 +242,8 @@ function DishesAdminPage() {
               {editingId ? "Guardar" : "Crear"}
             </button>
           </form>
+
+          {editingId && <DishModifiersSection dishId={editingId} />}
         </Modal>
       )}
     </div>

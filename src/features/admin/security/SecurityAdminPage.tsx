@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../../components/Header";
+import { useRestaurantSettings } from "../../../lib/useRestaurantSettings";
 import { useChangeAdminPin } from "./useChangeAdminPin";
-import { useRestaurantSettings } from "./useRestaurantSettings";
 import { useUpdateRecoveryEmail } from "./useUpdateRecoveryEmail";
 
 function SecurityAdminPage() {

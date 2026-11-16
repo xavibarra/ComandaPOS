@@ -1,10 +1,12 @@
-import { Check, ChevronDown, Minus, Printer } from "lucide-react";
+import { Check, ChevronDown, Minus, Printer, StickyNote } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Badge } from "../../../components/Badge";
 import { DishCard } from "../../../components/DishCard";
 import { Header } from "../../../components/Header";
 import { printBillTicket, printKitchenTicket } from "../../../lib/qz";
+import { useRestaurantSettings } from "../../../lib/useRestaurantSettings";
+import DishModifiersModal, { type CustomizableDish } from "./DishModifiersModal";
 import { useAddLine } from "./useAddLine";
 import { useCancelEmptyOrder } from "./useCancelEmptyOrder";
 import { useCategories } from "./useCategories";
@@ -17,6 +19,7 @@ import { useOrderTables } from "./useOrderTables";
 import { useRemoveUnit } from "./useRemoveUnit";
 import { useRequestBill } from "./useRequestBill";
 import { useSendToKitchen } from "./useSendToKitchen";
+import { useUpdateLineNote } from "./useUpdateLineNote";
 
 function OrderPage({
   orderId: orderIdProp,
@@ -33,14 +36,19 @@ function OrderPage({
   const addLine = useAddLine();
   const { data: lines } = useOrderLines(orderId!);
   const [ticketOpen, setTicketOpen] = useState(false);
+  const [modifierDish, setModifierDish] = useState<CustomizableDish | null>(null);
+  const [editingNoteFor, setEditingNoteFor] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const updateLineNote = useUpdateLineNote();
   const removeUnit = useRemoveUnit();
   const sendToKitchen = useSendToKitchen();
   const { data: order } = useOrder(orderId!);
+  const { data: restaurantSettings } = useRestaurantSettings();
   const requestBill = useRequestBill();
   const chargeOrder = useChargeOrder();
   const cancelEmptyOrder = useCancelEmptyOrder();
   const navigate = useNavigate();
-  const total = lines?.reduce((a, b) => a + b.platos.precio * b.cantidad, 0) ?? 0;
+  const total = lines?.reduce((a, b) => a + b.precio_unitario * b.cantidad, 0) ?? 0;
   const tableNames = orderTables?.map((m) => m.mesas.nombre);
   const sentLines = lines?.filter((l) => l.enviado_a_cocina) ?? [];
   const pendingLines = lines?.filter((l) => !l.enviado_a_cocina) ?? [];
@@ -50,22 +58,36 @@ function OrderPage({
     const linesForBill = lines?.map((l) => ({
       nombre: l.platos.nombre,
       cantidad: l.cantidad,
-      precio: l.platos.precio,
+      precio: l.precio_unitario,
+      modificadores: [
+        ...(l.comanda_linea_modificadores?.map((m: { nombre: string }) => m.nombre) ?? []),
+        ...(l.nota ? [`Nota: ${l.nota}`] : []),
+      ],
     }));
-    await printBillTicket(
-      "Cocina",
-      order?.numero ?? 0,
-      tableNames ?? [],
-      linesForBill ?? [],
+    await printBillTicket({
+      printerName: "Cocina",
+      restaurantName: restaurantSettings?.nombre ?? "",
+      number: order?.numero ?? 0,
+      tables: tableNames ?? [],
+      waiterName: order?.camareros?.nombre ?? "",
+      guests: order?.comensales ?? 1,
+      lines: linesForBill ?? [],
       total,
-    );
+    });
   };
 
   const handleSendToKitchen = async () => {
     const linesToPrint = lines
       ?.filter((l) => !l.enviado_a_cocina && l.platos.imprime_a_cocina)
       .sort((a, b) => a.platos.categorias.orden - b.platos.categorias.orden)
-      .map((l) => ({ nombre: l.platos.nombre, cantidad: l.cantidad }));
+      .map((l) => ({
+        nombre: l.platos.nombre,
+        cantidad: l.cantidad,
+        modificadores: [
+          ...(l.comanda_linea_modificadores?.map((m: { nombre: string }) => m.nombre) ?? []),
+          ...(l.nota ? [`Nota: ${l.nota}`] : []),
+        ],
+      }));
     sendToKitchen.mutate({ orderId: orderId! });
     await printKitchenTicket("Cocina", order?.numero ?? 0, tableNames ?? [], linesToPrint ?? []);
   };
@@ -119,13 +141,22 @@ function OrderPage({
                     const pendingLine = lines?.find(
                       (l) => l.plato_id === dish.id && !l.enviado_a_cocina,
                     );
+                    const hasRequiredVariant =
+                      dish.plato_variante_grupos?.some(
+                        (g: { obligatorio: boolean }) => g.obligatorio,
+                      ) ?? false;
                     return (
                       <DishCard
                         key={dish.id}
                         dish={dish}
                         sentQuantity={sentLine?.cantidad}
                         pendingQuantity={pendingLine?.cantidad}
+                        onCustomize={() => setModifierDish(dish)}
                         onClick={() => {
+                          if (hasRequiredVariant) {
+                            setModifierDish(dish);
+                            return;
+                          }
                           addLine.mutate({
                             orderId: orderId!,
                             dish: { id: dish.id, precio: dish.precio },
@@ -163,11 +194,23 @@ function OrderPage({
                 </p>
                 {sentLines.map((line) => (
                   <div key={line.id} className="flex items-center justify-between text-sm">
-                    <span className="text-stone-800">{line.platos.nombre}</span>
+                    <span className="text-stone-800">
+                      {line.platos.nombre}
+                      {line.comanda_linea_modificadores?.length > 0 && (
+                        <span className="block text-xs text-stone-400">
+                          {line.comanda_linea_modificadores
+                            .map((m: { nombre: string }) => m.nombre)
+                            .join(", ")}
+                        </span>
+                      )}
+                      {line.nota && (
+                        <span className="block text-xs text-stone-400 italic">{line.nota}</span>
+                      )}
+                    </span>
                     <span className="flex gap-3 text-stone-600">
                       <span>{line.cantidad}</span>
                       <span className="w-16 text-right">
-                        {(line.cantidad * line.platos.precio).toFixed(2)} €
+                        {(line.cantidad * line.precio_unitario).toFixed(2)} €
                       </span>
                     </span>
                   </div>
@@ -182,26 +225,68 @@ function OrderPage({
                   Nou · pendent d'enviar
                 </p>
                 {pendingLines.map((line) => (
-                  <div key={line.id} className="flex items-center justify-between text-sm">
-                    <span className="text-stone-800">{line.platos.nombre}</span>
-                    <span className="flex items-center gap-2 text-stone-600">
-                      <button
-                        onClick={() => {
-                          removeUnit.mutate({
-                            lineId: line.id,
-                            currentQuantity: line.cantidad,
-                            orderId: orderId!,
-                          });
-                        }}
-                        className="w-5 h-5 rounded-full border border-stone-300 text-stone-500 flex items-center justify-center hover:bg-stone-100 cursor-pointer"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <span>{line.cantidad}</span>
-                      <span className="w-16 text-right">
-                        {(line.cantidad * line.platos.precio).toFixed(2)} €
+                  <div key={line.id} className="flex flex-col gap-1 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-stone-800">
+                        {line.platos.nombre}
+                        {line.comanda_linea_modificadores?.length > 0 && (
+                          <span className="block text-xs text-stone-400">
+                            {line.comanda_linea_modificadores
+                              .map((m: { nombre: string }) => m.nombre)
+                              .join(", ")}
+                          </span>
+                        )}
                       </span>
-                    </span>
+                      <span className="flex items-center gap-2 text-stone-600">
+                        <button
+                          onClick={() => {
+                            setEditingNoteFor(editingNoteFor === line.id ? null : line.id);
+                            setNoteDraft(line.nota ?? "");
+                          }}
+                          title="Afegeix una nota"
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center cursor-pointer hover:bg-stone-100 ${
+                            line.nota ? "border-accent text-accent" : "border-stone-300 text-stone-400"
+                          }`}
+                        >
+                          <StickyNote size={11} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            removeUnit.mutate({
+                              lineId: line.id,
+                              currentQuantity: line.cantidad,
+                              orderId: orderId!,
+                            });
+                          }}
+                          className="w-5 h-5 rounded-full border border-stone-300 text-stone-500 flex items-center justify-center hover:bg-stone-100 cursor-pointer"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span>{line.cantidad}</span>
+                        <span className="w-16 text-right">
+                          {(line.cantidad * line.precio_unitario).toFixed(2)} €
+                        </span>
+                      </span>
+                    </div>
+
+                    {editingNoteFor === line.id ? (
+                      <input
+                        autoFocus
+                        className="border border-stone-300 rounded-lg px-2 py-1 text-xs"
+                        placeholder="p. ex. sense sal"
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value)}
+                        onBlur={() => {
+                          updateLineNote.mutate({ lineId: line.id, nota: noteDraft, orderId: orderId! });
+                          setEditingNoteFor(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                        }}
+                      />
+                    ) : (
+                      line.nota && <p className="text-xs text-stone-400 italic">{line.nota}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -287,6 +372,21 @@ function OrderPage({
           </div>
         )}
       </div>
+
+      {modifierDish && (
+        <DishModifiersModal
+          dish={modifierDish}
+          onClose={() => setModifierDish(null)}
+          onAdd={(unitPrice, modifiers) => {
+            addLine.mutate({
+              orderId: orderId!,
+              dish: { id: modifierDish.id, precio: unitPrice },
+              modifiers,
+            });
+            setModifierDish(null);
+          }}
+        />
+      )}
     </div>
   );
 }
